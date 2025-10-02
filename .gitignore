@@ -5,6 +5,7 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
@@ -21,23 +22,37 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# macOS
+# macOS / Editors
 .DS_Store
 *.pem
+.idea/
+.vscode/*
+!.vscode/extensions.json
 
-# local env files
+# Local env files (never commit real secrets)
+.env
+.env.*
+!.env.example
+# (keeps your previous pattern too)
 .env*.local
 
-# typescript
+# Private local notes
+yesChefkickoffmessage.md
+docs/private/**
+!docs/private/.gitkeep
+
+# TypeScript
 *.tsbuildinfo
 
-app-example
-
-# generated native folders
+# Generated native folders
 /ios
 /android
+
+# Project-specific
+app-example

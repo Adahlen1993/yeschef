@@ -1,33 +1,48 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: "#16a34a", // green accent
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="pantry"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Pantry",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="basket" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="recipes"
+        options={{
+          title: "Recipes",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="restaurant" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="list"
+        options={{
+          title: "List",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list" color={color} size={size} />
+          ),
         }}
       />
     </Tabs>

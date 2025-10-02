@@ -1,50 +1,52 @@
-# Welcome to your Expo app 👋
+# YesChef
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Cross-platform mobile app (Expo/React Native + TypeScript) that helps people manage their pantry and discover recipes from what they already have — barcode scan now, receipt OCR + AI later.
 
-## Get started
+---
 
-1. Install dependencies
+## Status
 
-   ```bash
-   npm install
-   ```
+- ✅ Expo app (TypeScript, Expo Router with Tabs)
+- ✅ State: Zustand (local/UI), TanStack Query (server)
+- ⏳ Auth/DB (Supabase)
+- ⏳ Pantry CRUD
+- ⏳ Barcode scan (POC)
+- ⏳ Recipe suggestions
+- ⏳ Shopping list
+- ⏳ Receipt OCR + AI (post-MVP)
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## MVP Features
 
-In the output, you'll find options to open the app in a
+- Email/password auth
+- Pantry items: add/edit/delete (manual first)
+- Barcode scan proof-of-concept
+- Simple recipe suggestions from pantry overlap
+- Basic shopping list
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Post-MVP (v2)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Receipt OCR → auto-add items
+- Community recipes (public/private, likes/favorites)
+- Budget/analytics (“How much did I spend on produce?”)
+- AI Q&A (“What can I cook tonight?”)
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## Tech Decisions
 
-```bash
-npm run reset-project
-```
+- **Frontend:** Expo (React Native) + Expo Router (Tabs)
+- **Language:** TypeScript (loose now, tighten later)
+- **State:**
+  - **Zustand** for local/UI (auth session, UI flags)
+  - **TanStack Query** for server state (pantry, recipes)
+- **Backend/DB:** Supabase (Postgres, Auth, Storage, RLS) — free-tier friendly
+- **Barcode:** `expo-barcode-scanner` (later)
+- **OCR:** Cloud provider via backend (later)
+- **AI:** Backend endpoint calling an LLM (later)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## Project Structure
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
