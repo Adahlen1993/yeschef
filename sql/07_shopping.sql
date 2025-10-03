@@ -1,3 +1,5 @@
+-- 07_shopping.sql (FULL, safe to re-run)
+
 -- Shopping lists
 create table if not exists public.shopping_lists (
   id uuid primary key default gen_random_uuid(),
@@ -9,10 +11,14 @@ alter table public.shopping_lists enable row level security;
 
 do $$
 begin
-  if exists (select 1 from pg_policies where schemaname='public' and tablename='shopping_lists' and policyname='shopping_lists_rw_own') then
+  if exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='shopping_lists' and policyname='shopping_lists_rw_own'
+  ) then
     drop policy "shopping_lists_rw_own" on public.shopping_lists;
   end if;
 end $$;
+
 create policy "shopping_lists_rw_own" on public.shopping_lists
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
@@ -31,10 +37,14 @@ alter table public.shopping_list_items enable row level security;
 
 do $$
 begin
-  if exists (select 1 from pg_policies where schemaname='public' and tablename='shopping_list_items' and policyname='shopping_items_rw_own') then
+  if exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='shopping_list_items' and policyname='shopping_items_rw_own'
+  ) then
     drop policy "shopping_items_rw_own" on public.shopping_list_items;
   end if;
 end $$;
+
 create policy "shopping_items_rw_own" on public.shopping_list_items
 for all using (
   auth.uid() = (
@@ -49,19 +59,23 @@ for all using (
 -- Deduplicate by ingredient+unit when ingredient_id present
 do $$
 begin
-  if not exists (select 1 from pg_indexes where schemaname='public' and indexname='shopping_items_unique_ing_unit_partial') then
+  if not exists (
+    select 1 from pg_indexes where schemaname='public' and indexname='shopping_items_unique_ing_unit_partial'
+  ) then
     create unique index shopping_items_unique_ing_unit_partial
       on public.shopping_list_items (shopping_list_id, ingredient_id, unit)
       where ingredient_id is not null;
   end if;
 end $$;
 
--- Deduplicate by normalized name+unit when ingredient_id is null
+-- Deduplicate by normalized name+unit when ingredient_id is null (uses immutable public.norm)
 do $$
 begin
-  if not exists (select 1 from pg_indexes where schemaname='public' and indexname='shopping_items_unique_name_unit_partial') then
+  if not exists (
+    select 1 from pg_indexes where schemaname='public' and indexname='shopping_items_unique_name_unit_partial'
+  ) then
     create unique index shopping_items_unique_name_unit_partial
-      on public.shopping_list_items (shopping_list_id, (lower(unaccent(name_override))), unit)
+      on public.shopping_list_items (shopping_list_id, public.norm(name_override), unit)
       where ingredient_id is null and name_override is not null;
   end if;
 end $$;

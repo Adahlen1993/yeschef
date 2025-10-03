@@ -3,7 +3,6 @@ create table if not exists public.ingredient_aliases (
   id uuid primary key default gen_random_uuid(),
   ingredient_id uuid not null references public.ingredients(id) on delete cascade,
   alias text not null,
-  normalized_alias text generated always as (lower(unaccent(alias))) stored,
   source text not null default 'user' check (source in ('system','user')),
   user_id uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
@@ -34,14 +33,14 @@ using (
 create policy "alias_write_own" on public.ingredient_aliases
 for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- Fuzzy search index
+-- Fuzzy search index on normalized expression (use immutable norm())
 do $$
 begin
   if not exists (
     select 1 from pg_indexes where schemaname='public' and indexname='ingredient_aliases_trgm_idx'
   ) then
     create index ingredient_aliases_trgm_idx
-    on public.ingredient_aliases using gin (normalized_alias gin_trgm_ops);
+      on public.ingredient_aliases using gin ( public.norm(alias) gin_trgm_ops );
   end if;
 end $$;
 
@@ -52,6 +51,7 @@ create table if not exists public.barcode_mappings (
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now()
 );
+
 alter table public.barcode_mappings enable row level security;
 
 do $$
