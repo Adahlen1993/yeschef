@@ -45,7 +45,10 @@ pnpm-debug.log*
 # Private local notes
 yesChefkickoffmessage.md
 userexp.md
-projectcontext.md
+Context.md
+Context2.md
+NEXT_STEPS.md
+UX-FLOW.md
 docs/private/**
 !docs/private/.gitkeep
 
