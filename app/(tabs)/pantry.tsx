@@ -1,124 +1,108 @@
-import { useState } from "react";
-import { ActivityIndicator, Button, FlatList, Text, TextInput, View } from "react-native";
-import { PantryItem, usePantry } from "../../hooks/usePantry";
+// app/pantry.tsx
+import React, { useEffect, useState } from "react";
+import { FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import Typeahead from "../../components/Typeahead";
+import { supabase } from "../../lib/supabase";
+import type { Suggestion } from "../../lib/types";
 
-export default function PantryScreen() {
-  const { pantry, addItem, deleteItem } = usePantry();
+export default function PantryPage() {
+  const [uid, setUid] = useState<string | null>(null);
+  const [pantryItems, setPantryItems] = useState<Suggestion[]>([]);
 
-  // simple add form (manual quick-add using name_override)
-  const [name, setName] = useState("");
-  const [qty, setQty] = useState("1");
-  const [unit, setUnit] = useState("item"); // e.g., item | g | oz | ml | cup
+  // Get user ID on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUid(data.user?.id ?? null);
+    });
+  }, []);
 
-  function onAdd() {
-    if (!name.trim()) return;
-    addItem.mutate({ name_override: name.trim(), quantity: Number(qty) || 1, unit });
-    setName("");
-    setQty("1");
-    setUnit("item");
+  // Load existing pantry items for this user
+  useEffect(() => {
+    if (!uid) return;
+    supabase
+      .from("user_ingredients")
+      .select("id, name")
+      .eq("user_id", uid)
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setPantryItems(data.map((r) => ({ id: r.id, label: r.name })));
+        }
+      });
+  }, [uid]);
+
+  // Search ingredients (global + personal)
+  async function searchIngredients(query: string): Promise<Suggestion[]> {
+    if (!query.trim()) return [];
+    const { data, error } = await supabase.rpc("search_ingredients", {
+      q: query,
+      uid,
+      lim: 20,
+    });
+    if (error) throw error;
+    return (data ?? []).map((row: { row_key: string; label: string; source: string }) => ({
+      id: `${row.source}:${row.row_key}`,
+      label: row.label,
+      note: row.source === "personal" ? "(yours)" : undefined,
+    }));
   }
 
-  if (pantry.isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator />
-        <Text style={{ marginTop: 8 }}>Loading pantry…</Text>
-      </View>
-    );
+  // Add an ingredient to the user's pantry
+  async function addToPantry(item: Suggestion) {
+    if (!uid) return;
+
+    // Check if it's already there
+    if (pantryItems.some((p) => p.label.toLowerCase() === item.label.toLowerCase())) return;
+
+    const { error } = await supabase
+      .from("user_ingredients")
+      .insert({ name: item.label, user_id: uid });
+
+    if (!error) {
+      setPantryItems((prev) => [...prev, item]);
+    }
   }
-
-  if (pantry.isError) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 16 }}>
-        <Text style={{ color: "red", textAlign: "center" }}>
-          Failed to load pantry: {(pantry.error as Error).message}
-        </Text>
-      </View>
-    );
-  }
-
-  const data = pantry.data ?? [];
-
-  const renderItem = ({ item }: { item: PantryItem }) => {
-    const label = item.name_override || item.ingredient?.name || "(unnamed)";
-    return (
-      <View
-        style={{
-          padding: 12,
-          borderBottomWidth: 1,
-          borderColor: "#e5e5e5",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: "600" }}>{label}</Text>
-          <Text style={{ opacity: 0.7 }}>
-            {item.quantity} {item.unit}
-          </Text>
-        </View>
-        <Button title="Delete" onPress={() => deleteItem.mutate(item.id)} />
-      </View>
-    );
-  };
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* Add form */}
-      <View style={{ padding: 16, gap: 8 }}>
-        <Text style={{ fontSize: 18, fontWeight: "600" }}>Add to Pantry</Text>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>My Pantry</Text>
 
-        <Text>Name</Text>
-        <TextInput
-          placeholder="e.g., Black beans"
-          value={name}
-          onChangeText={setName}
-          style={{ borderWidth: 1, borderRadius: 8, padding: 10 }}
-        />
+      <Typeahead search={searchIngredients} onSelect={addToPantry} />
 
-        <Text>Quantity</Text>
-        <TextInput
-          placeholder="1"
-          keyboardType="numeric"
-          value={qty}
-          onChangeText={setQty}
-          style={{ borderWidth: 1, borderRadius: 8, padding: 10 }}
-        />
-
-        <Text>Unit</Text>
-        <TextInput
-          placeholder="item"
-          value={unit}
-          onChangeText={setUnit}
-          style={{ borderWidth: 1, borderRadius: 8, padding: 10 }}
-        />
-
-        <Button
-          title={addItem.isPending ? "Adding…" : "Add Item"}
-          onPress={onAdd}
-          disabled={addItem.isPending}
-        />
-        {addItem.isError ? (
-          <Text style={{ color: "red" }}>
-            {(addItem.error as Error).message}
-          </Text>
-        ) : null}
-      </View>
-
-      {/* List */}
       <FlatList
-        data={data}
-        keyExtractor={(i) => i.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        ListEmptyComponent={
-          <View style={{ padding: 16 }}>
-            <Text style={{ opacity: 0.7 }}>Your pantry is empty. Add something above.</Text>
+        data={pantryItems}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.pantryItem}>
+            <Text style={styles.pantryText}>{item.label}</Text>
           </View>
-        }
+        )}
+        style={styles.list}
       />
-    </View>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingHorizontal: 16,
+    paddingTop: 50,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  list: {
+    marginTop: 20,
+  },
+  pantryItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+  pantryText: {
+    fontSize: 16,
+  },
+});

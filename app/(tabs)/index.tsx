@@ -1,5 +1,6 @@
 // app/(tabs)/index.tsx
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "expo-router";
 import { Button, Text, View } from "react-native";
 import { useAuth } from "../../state/useAuth";
 
@@ -22,6 +23,13 @@ export default function IndexTab() {
       <Button title="Sign Out" onPress={signOut} />
       <Text>{now.isLoading ? "Loading time..." : `Now: ${now.data}`}</Text>
       <Button title="Refetch Time" onPress={() => now.refetch()} />
+      <Link href="/typeahead-demo">
+        <Button title="Open Typeahead Demo" />
+      </Link>
+
     </View>
   );
 }
+
+// typehead demo for quick testing
+// export { default } from "../typeahead-demo";
